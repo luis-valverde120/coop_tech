@@ -1,0 +1,18 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@theme {
+  --color-coopverde: #008A4B;
+  --color-coopverdeclaro: #E6F3ED;
+  --color-cooprojoclaro: #FDECEF;
+  --color-cooprojo: #E53E3E;
+  --color-coopnaranja: #ED8936;
+  --color-coopamarillo: #ECC94B;
+  --color-coopgris: #F8F9FA;
+}
+
+@layer base {
+  body {
+    @apply bg-coopgris text-gray-800 font-sans antialiased;
+  }
+}

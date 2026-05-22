@@ -20,8 +20,14 @@ def leer_datos_robusto(patron_archivo):
 print("Procesando Créditos...")
 df_credito = leer_datos_robusto("datos/DataSabanaCred*.*")
 
-# Renombrar clave
-df_credito = df_credito.rename(columns={'nro_cliente': 'id_cliente'})
+# Renombrar clave y columnas clave requeridas
+df_credito = df_credito.rename(columns={
+    'nro_cliente': 'id_cliente',
+    'monto_credito': 'credito',
+    'saldo_capital': 'saldo_disponible',
+    'ingresos_socio': 'ingresos',
+    'egresos_socio': 'egresos'
+})
 df_credito['id_cliente'] = df_credito['id_cliente'].astype(str)
 
 # 1.1 Calcular la Edad (Ingeniería de variables)
@@ -32,16 +38,16 @@ if 'fecha_nacimiento' in df_credito.columns:
     df_credito['edad'] = df_credito['edad'].fillna(df_credito['edad'].median()) # Rellenamos sin edad con la media
 
 # 1.2 CREAR LA VARIABLE OBJETIVO (es_moroso)
-# Como ahora tenemos 'dias_mora', esta es la mejor forma de definir morosidad real.
-# REGLA: Si tiene más de 30 días de mora, es moroso (1), si no, es buen pagador (0).
+# REGLA: Si tiene días de mora (> 0), es moroso (1), si no, es buen pagador (0).
 if 'dias_mora' in df_credito.columns:
-    df_credito['es_moroso'] = (df_credito['dias_mora'] > 30).astype(int)
+    df_credito['es_moroso'] = (df_credito['dias_mora'] > 0).astype(int)
 
 # 1.3 Filtrar estrictamente las columnas que pediste
 columnas_credito_keeper = [
-    'id_cliente', 'es_moroso', 'dias_mora', 'nro_cuotas_atra', 'ingresos_soc', 'egresos_soc', 
+    'id_cliente', 'es_moroso', 'dias_mora', 'nro_cuotas_atra', 'ingresos', 'egresos', 
     'val_morad', 'val_int_mora', 'calificacion', 'tipo_cartera', 'plazo', 
-    'tasas_int_con', 'garantias', 'sexo', 'estado_civil', 'nivel_educa', 'tipo_vivien', 'edad'
+    'tasas_int_con', 'garantias', 'sexo', 'estado_civil', 'nivel_educa', 'tipo_vivien', 'edad',
+    'credito', 'saldo_disponible'
 ]
 # Solo nos quedamos con las que realmente existen en el archivo
 columnas_presentes_cred = [col for col in columnas_credito_keeper if col in df_credito.columns]
@@ -67,8 +73,7 @@ if 'fecha_aper' in df_ahorro.columns:
 
 # 2.2 Filtrar estrictamente las columnas que pediste
 columnas_ahorro_keeper = [
-    'id_cliente', 'saldo_disponible', 'antiguedad_meses_ahorro', 'ingresos', 
-    'egresos', 'tarjetas', 'credito', 'int_acumula', 'saldo_int_decim'
+    'id_cliente', 'antiguedad_meses_ahorro', 'tarjetas', 'int_acumula', 'saldo_int_decim'
 ]
 columnas_presentes_ahorro = [col for col in columnas_ahorro_keeper if col in df_ahorro.columns]
 df_ahorro = df_ahorro[columnas_presentes_ahorro]
@@ -127,6 +132,16 @@ print("Cruzando datos...")
 df_master = df_credito.copy()
 df_master = df_master.merge(df_ahorro, on='id_cliente', how='left')
 df_master = df_master.merge(df_trns_resumen, on='id_cliente', how='left')
+
+# Asegurar que no queden valores nulos en columnas numéricas clave tras el cruce
+columnas_rellenar_cero = [
+    'saldo_disponible', 'ingresos', 'egresos', 'credito', 'val_morad',
+    'total_ingresos_tx', 'total_egresos_tx', 'saldo_contable', 'saldo_disponible_tx',
+    'cantidad_transacciones', 'tipos_movimientos_distintos'
+]
+for col in columnas_rellenar_cero:
+    if col in df_master.columns:
+        df_master[col] = pd.to_numeric(df_master[col], errors='coerce').fillna(0)
 
 # Convertir columnas de texto a categorías para LightGBM
 columnas_texto = df_master.select_dtypes(include=['object']).columns

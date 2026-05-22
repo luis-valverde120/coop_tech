@@ -52,7 +52,15 @@ clientes_actuales['semaforo'] = np.select(condiciones, etiquetas_semaforo, defau
 reporte_completo = clientes_actuales.sort_values('probabilidad_mora', ascending=False)
 
 # Exportamos la lista para que la interfaz web de la app la pueda mostrar
-columnas_exportar = ['id_cliente', 'probabilidad_mora', 'semaforo', 'saldo_disponible', 'ingresos', 'egresos']
+columnas_exportar = [
+    'id_cliente', 'probabilidad_mora', 'semaforo', 'saldo_disponible', 
+    'ingresos', 'egresos', 'credito', 'cantidad_transacciones', 'val_morad', 'dias_mora'
+]
+# Asegurarnos de que las columnas existan, si no, llenarlas con 0
+for col in columnas_exportar:
+    if col not in reporte_completo.columns:
+        reporte_completo[col] = 0
+
 reporte_completo[columnas_exportar].to_csv('reporte_semaforo_riesgo.csv', index=False)
 print("✅ Archivo 'reporte_semaforo_riesgo.csv' generado.")
 
