@@ -15,11 +15,11 @@ const Layout = () => {
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
         <div className="p-6 flex items-center gap-2">
-          <div className="w-8 h-8 rounded bg-coopverde flex items-center justify-center text-white font-bold">
-            C
+          <div className="w-8 h-8 rounded flex items-center justify-center">
+            <img src="/logo.jpeg" alt="Logo" className="w-full h-full object-contain" />
           </div>
-          <span className="font-bold text-gray-800 tracking-tight text-lg leading-tight">
-            <span className="text-coopnaranja">TULCÁN</span> LTDA.
+          <span className="font-bold text-gray-800 tracking-tight text-lg leading-tight text-coopnaranja">
+            Tulcaniza
           </span>
         </div>
         

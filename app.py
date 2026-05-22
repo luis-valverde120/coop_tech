@@ -9,7 +9,7 @@ import math
 # ==========================================
 # 1. CONFIGURACIÓN Y ESTILOS (Blanco, Verde, Tomate)
 # ==========================================
-st.set_page_config(page_title="Cooperativa Tulcán | devIAlabs", page_icon="🏦", layout="wide")
+st.set_page_config(page_title="Tulcaniza | devIAlabs", page_icon="🏦", layout="wide")
 
 # CSS Avanzado para imitar React y la paleta de Tulcán
 st.markdown("""
@@ -96,7 +96,12 @@ if df is None:
 # ==========================================
 # 4. SIDEBAR PROFESIONAL
 # ==========================================
-st.sidebar.markdown(f"<h2 style='color:#008A4B; text-align:center;'>🏦 CoopTech</h2>", unsafe_allow_html=True)
+import os
+if os.path.exists("logo.jpeg"):
+    st.sidebar.image("logo.jpeg", use_container_width=True)
+else:
+    st.sidebar.markdown(f"<h2 style='color:#008A4B; text-align:center;'>🏦 Tulcaniza</h2>", unsafe_allow_html=True)
+
 st.sidebar.markdown("<p style='text-align:center; color:#888; margin-top:-15px;'>by devIAlabs</p>", unsafe_allow_html=True)
 st.sidebar.divider()
 

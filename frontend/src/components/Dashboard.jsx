@@ -3,6 +3,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Users, AlertTriangle, TrendingUp, CheckCircle, DollarSign, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import RadarNoticias from './RadarNoticias';
 
 const Dashboard = () => {
   const [data, setData] = useState(null);
@@ -152,8 +153,11 @@ const Dashboard = () => {
         </div>
       </div>
       
+      {/* Radar de Noticias Externas */}
+      <RadarNoticias />
+      
       {/* Footer shortcut to Socios */}
-      <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex justify-between items-center">
+      <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex justify-between items-center mt-6">
         <h3 className="text-sm font-bold text-gray-800">Socios con Mayor Riesgo</h3>
         <Link to="/socios" className="text-sm font-semibold text-coopverde flex items-center gap-1 hover:underline">
           Ver todos <ArrowRight size={14} />

@@ -223,3 +223,90 @@ Usa un tono profesional, claro y sin introducciones robóticas. Separa cada secc
     except Exception as e:
         return {"analisis": f"No se pudo conectar con el modelo Gemma local. Error: {str(e)}"}
 
+import glob
+from scraper_noticias import obtener_titulares_noticias
+import json
+
+@app.get("/api/noticias/impacto")
+def get_impacto_noticias():
+    try:
+        # 1. Obtener titulares
+        titulares = obtener_titulares_noticias()
+        if not titulares:
+            return {"error": "No se pudieron obtener noticias."}
+            
+        # 2. Leer actividades de DataSabanaCred
+        archivos_sabana = glob.glob('datos/DataSabanaCred*.xls')
+        if not archivos_sabana:
+            return {"error": "No se encontraron archivos DataSabanaCred."}
+            
+        # Leemos solo las columnas necesarias para que sea rápido
+        df_sabana = pd.read_excel(archivos_sabana[0], usecols=['nro_cliente', 'actividad_socio', 'ingresos_socio', 'egresos_socio'])
+        df_sabana = df_sabana.dropna(subset=['actividad_socio'])
+        actividades_unicas = df_sabana['actividad_socio'].unique().tolist()
+        
+        # Para evitar saturar a la IA, tomamos un máximo de 30 actividades (o podrías tomar las más comunes)
+        actividades_comunes = df_sabana['actividad_socio'].value_counts().head(30).index.tolist()
+        
+        # 3. Consultar a Gemma
+        prompt = f"""Eres un analista de riesgos macroeconómicos.
+Titulares recientes de Ecuador: {titulares}
+
+Nuestros clientes se dedican a estas actividades: {actividades_comunes}
+
+Analiza si alguna de estas actividades se verá directamente afectada negativamente por las noticias (ej. baja de ingresos, aumento de costos).
+Debes responder ESTRICTAMENTE con un objeto JSON válido y nada más. Sigue esta estructura:
+{{
+    "analisis_general": "Resumen del panorama",
+    "actividades_afectadas": [
+        {{"actividad": "nombre exacto", "razon": "Por qué se afecta"}}
+    ]
+}}
+IMPORTANTE: No uses comillas dobles (\") dentro de los textos para evitar romper el JSON.
+"""
+        import ollama
+        respuesta = ollama.chat(model='gemma4', messages=[{'role': 'user', 'content': prompt}])
+        contenido = respuesta['message']['content']
+        
+        # Limpiar la respuesta para asegurar JSON
+        if '```json' in contenido:
+            contenido = contenido.split('```json')[1].split('```')[0]
+        elif '```' in contenido:
+            contenido = contenido.split('```')[1].split('```')[0]
+            
+        contenido = contenido.strip()
+        try:
+            resultado_ia = json.loads(contenido)
+        except json.JSONDecodeError as e:
+            # Fallback en caso de que el JSON esté corrupto
+            print(f"Error parseando JSON de IA: {e}\nContenido: {contenido}")
+            resultado_ia = {
+                "analisis_general": "El análisis se generó pero la Inteligencia Artificial devolvió un formato inválido. Por favor intenta escanear nuevamente.",
+                "actividades_afectadas": []
+            }
+        
+        # 4. Relacionar con los clientes
+        afectados_final = []
+        for impacto in resultado_ia.get('actividades_afectadas', []):
+            act = impacto['actividad']
+            clientes_act = df_sabana[df_sabana['actividad_socio'] == act]
+            
+            # Tomamos un top 10 clientes para mostrar
+            muestra_clientes = clientes_act.head(10).to_dict(orient='records')
+            
+            afectados_final.append({
+                "actividad": act,
+                "razon": impacto['razon'],
+                "total_clientes": len(clientes_act),
+                "ejemplos_clientes": muestra_clientes
+            })
+            
+        return {
+            "titulares": titulares,
+            "analisis_general": resultado_ia.get('analisis_general', ''),
+            "impactos": afectados_final
+        }
+        
+    except Exception as e:
+        return {"error": str(e)}
+
