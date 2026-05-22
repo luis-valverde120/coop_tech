@@ -1,0 +1,6 @@
+[theme]
+primaryColor = "#F26522" # El Naranja "Tomate" para resaltar botones activos y el slider
+backgroundColor = "#FFFFFF" # Fondo Blanco institucional
+secondaryBackgroundColor = "#F7F9F9" # Un gris súper clarito para la barra lateral y separadores
+textColor = "#333333" # Texto gris muy oscuro (el negro puro cansa la vista)
+font = "sans serif"
